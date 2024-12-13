@@ -1,20 +1,20 @@
 #define BLINKER_WIFI
 #include <Blinker.h>
 #include <Arduino.h>
-
+#include <WiFi.h>
+#include <DNSServer.h>
+#include <WebServer.h>
+#include <WiFiManager.h>
 
 #define FREQ 2000     // 频率
 #define RESOLUTION 8  // 分辨率
 
 
 char auth[] = "c3d2e3af440e";
-char ssid[] = "office2.4G-wifi";
-char pswd[] = "88888888";
 
-
+WiFiManager wifiManager;
 
 int shock = 15;
-int val;
 int onoff = 0;
 int sleeptime = 0;
 int havesleep = 0;
@@ -105,6 +105,7 @@ void Shallow(int st) {
   int s = st / 10;
   int xx = 0;
   int yy = 0;
+  Serial.println("Shallow");
   for (int i = 0; i < s; i++) {
     Serial.println("Star1");
     while (1) {
@@ -116,7 +117,7 @@ void Shallow(int st) {
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
-          if (tens >= 2) {
+          if (tens >= 1) {
             tens = 0;
             onoff = 0;
             mint = 0;
@@ -137,6 +138,7 @@ void Safely(int st) {
   int s = st / 10;
   int xx = 0;
   int yy = 0;
+  Serial.println("Safely");
   for (int i = 0; i < s; i++) {
     Serial.println("Star1");
     while (1) {
@@ -144,7 +146,7 @@ void Safely(int st) {
       if (mint >= 10) {
         onoff = 1;
         Serial.println("Star3");
-        ledcWrite(shock, 50);
+        ledcWrite(shock, 40);
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
@@ -196,6 +198,38 @@ void clearCount() {
   mint = 0;
 }
 
+void Init_wifi(){
+
+  // 自动连接WiFi。
+  wifiManager.autoConnect("睡饱饱宝可睡");
+  // 如果您希望该WiFi添加密码，可以使用以下语句：
+  // wifiManager.autoConnect("AutoConnectAP", "12345678");
+  // 以上语句中的12345678是连接AutoConnectAP的密码
+  // WiFi连接成功后将通过串口监视器输出连接成功信息
+  Serial.println("");
+  Serial.print("ESP32 Connected to ");
+  Serial.println(WiFi.SSID());  // WiFi名称
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.localIP());  // IP
+}
+
+void Init_Blinker(){
+
+  String ssid = WiFi.SSID();
+  const char* ssid_char = ssid.c_str();
+  String pswd = WiFi.psk();
+  const char* pswd_char = pswd.c_str();
+
+  Blinker.begin(auth, ssid_char, pswd_char);
+
+  Blinker.attachHeartbeat(heartbeat);
+  ButtonSleep.attach(ButtonSleep_callback);
+  ButtonSafely.attach(ButtonSafely_callback);
+  ButtonShallow.attach(ButtonShallow_callback);
+  SliderHour.attach(SliderHour_callback);
+  SliderMint.attach(SliderMint_callback);
+}
+
 void Init_timer() {
 
   tim = timerBegin(1000000);
@@ -209,15 +243,15 @@ void Update_BlinkerUI(){
   SliderHour.print(sliderhour);
   SliderMint.print(slidermint);
   switch(sleepstate){
-    case '0' :
+    case 0 :
         ButtonSafely.print("off");
         ButtonShallow.print("off");
         break;
-    case '1' :
+    case 1 :
         ButtonSafely.print("on");
         ButtonShallow.print("off");
         break;
-    case '2' :
+    case 2 :
         ButtonSafely.print("off");
         ButtonShallow.print("on");
         break;
@@ -244,13 +278,9 @@ void setup() {
   ledcAttach(shock, FREQ, RESOLUTION);
   ledcWrite(shock, 0);
   digitalWrite(shock, HIGH);
-  Blinker.begin(auth, ssid, pswd);
-  Blinker.attachHeartbeat(heartbeat);
-  ButtonSleep.attach(ButtonSleep_callback);
-  ButtonSafely.attach(ButtonSafely_callback);
-  ButtonShallow.attach(ButtonShallow_callback);
-  SliderHour.attach(SliderHour_callback);
-  SliderMint.attach(SliderMint_callback);
+  Init_wifi();
+  Init_Blinker();
+
 }
 
 void loop() {
