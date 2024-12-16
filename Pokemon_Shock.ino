@@ -16,6 +16,7 @@ WiFiManager wifiManager;
 
 int shock = 15;
 int onoff = 0;
+int gosleepmsg = 0;
 int sleeptime = 0;
 int havesleep = 0;
 int buttononoff = 0;
@@ -35,10 +36,18 @@ BlinkerButton ButtonShallow("btn-wq7");
 BlinkerNumber NumberSleep("num-abc");
 BlinkerSlider SliderHour("ran-d83");
 BlinkerSlider SliderMint("ran-rkj");
+BlinkerButton ButtonIcon("btn-d32");
 
 void ButtonSleep_callback(const String &state) {
   BLINKER_LOG("get ButtonSleep state: ", state);
-  buttononoff = 1;
+  if(sleepstate != 0){
+    buttononoff = 1;
+    ButtonIcon.icon("fas fa-snooze");
+    ButtonIcon.color("#FAFAD2");
+    ButtonIcon.text("正在睡觉");
+    ButtonIcon.print();
+  }
+  
 }
 
 void ButtonSafely_callback(const String &state) {
@@ -93,16 +102,20 @@ void SliderMint_callback(int32_t value) {
 
 
 void GotoSleep() {
+
+  Serial.println("GotoSleep");
+  gosleepmsg = 1;
   while (1) {
     Blinker.run();
     if (mint == 10) {
       mint = 0;
+      gosleepmsg = 0;
       break;
     }
   }
 }
 void Shallow(int st) {
-  int s = st / 10;
+  int s = st / 10 ;
   int xx = 0;
   int yy = 0;
   Serial.println("Shallow");
@@ -113,7 +126,7 @@ void Shallow(int st) {
       if (mint >= 10) {
         onoff = 1;
         Serial.println("Star3");
-        ledcWrite(shock, 50);
+        ledcWrite(shock, 52);
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
@@ -135,7 +148,7 @@ void Shallow(int st) {
 }
 
 void Safely(int st) {
-  int s = st / 10;
+  int s = st / 10 ;
   int xx = 0;
   int yy = 0;
   Serial.println("Safely");
@@ -146,7 +159,7 @@ void Safely(int st) {
       if (mint >= 10) {
         onoff = 1;
         Serial.println("Star3");
-        ledcWrite(shock, 40);
+        ledcWrite(shock, 45);
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
@@ -183,9 +196,9 @@ void service_timer0() {
   }
   if (count >= 60) {
     mint++;
-    havesleep++;
-    // Serial.print(mint);
-    // Serial.println(" minute");
+    if(gosleepmsg == 0){
+        havesleep++;
+    }
     NumberSleep.print(havesleep);
     count = 0;
   }
@@ -257,6 +270,21 @@ void Update_BlinkerUI(){
         break;
   }
 
+  switch(buttononoff){
+    case 0 :
+        ButtonIcon.icon("far fa-sun");
+        ButtonIcon.color("#F4A460");
+        ButtonIcon.text("等待睡觉");
+        ButtonIcon.print();
+        break;
+    case 1 :
+        ButtonIcon.icon("fas fa-snooze");
+        ButtonIcon.color("#FAFAD2");
+        ButtonIcon.text("正在睡觉");
+        ButtonIcon.print();
+        break;
+  }
+
 }
 
 void heartbeat()
@@ -286,7 +314,7 @@ void setup() {
 void loop() {
   Blinker.run();
     if (buttononoff == 1) {
-      sleeptime = hourcount + mintcount - 20;
+      sleeptime = hourcount + mintcount - 10;
       if (sleeptime <= 0) {
         Serial.println("erro time");
         buttononoff=0;
@@ -302,6 +330,11 @@ void loop() {
           GotoSleep();
           timerStop(tim);
           Serial.println("Shock End.");
+          clearCount();
+          ButtonIcon.icon("far fa-sun");
+          ButtonIcon.color("#F4A460");
+          ButtonIcon.text("等待睡觉");
+          ButtonIcon.print();
         }
         if (sleepstate == 2) {
           //sleeptime = 280;
