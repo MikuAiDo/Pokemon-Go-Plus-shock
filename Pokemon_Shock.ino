@@ -104,7 +104,6 @@ void SliderMint_callback(int32_t value) {
 void GotoSleep() {
 
   Serial.println("GotoSleep");
-  gosleepmsg = 1;
   while (1) {
     Blinker.run();
     if (mint == 10) {
@@ -123,10 +122,10 @@ void Shallow(int st) {
     Serial.println("Star1");
     while (1) {
       Blinker.run();
-      if (mint >= 10) {
+      if (mint >= 5) {
         onoff = 1;
         Serial.println("Star3");
-        ledcWrite(shock, 52);
+        ledcWrite(shock, 45);
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
@@ -325,6 +324,7 @@ void loop() {
           //sleeptime = 280;
           clearCount();
           timerRestart(tim);
+          gosleepmsg = 1;
           GotoSleep();
           Safely(sleeptime);
           GotoSleep();
@@ -340,11 +340,17 @@ void loop() {
           //sleeptime = 280;
           clearCount();
           timerRestart(tim);
+          gosleepmsg = 1;
           GotoSleep();
-          Safely(sleeptime);
+          Shallow(sleeptime);
           GotoSleep();
           timerStop(tim);
           Serial.println("Shock End.");
+          clearCount();
+          ButtonIcon.icon("far fa-sun");
+          ButtonIcon.color("#F4A460");
+          ButtonIcon.text("等待睡觉");
+          ButtonIcon.print();
         }
 
         buttononoff = 0;
