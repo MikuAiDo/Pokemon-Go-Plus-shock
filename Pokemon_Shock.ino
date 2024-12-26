@@ -15,7 +15,9 @@ char auth[] = "c3d2e3af440e";
 WiFiManager wifiManager;
 
 int shock = 15;
+int plus = 18;
 int onoff = 0;
+int emergencyExit = 0;
 int gosleepmsg = 0;
 int sleeptime = 0;
 int havesleep = 0;
@@ -33,6 +35,8 @@ hw_timer_t *tim = NULL;
 BlinkerButton ButtonSleep("btn-abc");
 BlinkerButton ButtonSafely("btn-v74");
 BlinkerButton ButtonShallow("btn-wq7");
+BlinkerButton ButtonDeeply("btn-4kc");
+BlinkerButton ButtonExit("btn-0e6");
 BlinkerNumber NumberSleep("num-abc");
 BlinkerSlider SliderHour("ran-d83");
 BlinkerSlider SliderMint("ran-rkj");
@@ -50,33 +54,59 @@ void ButtonSleep_callback(const String &state) {
   
 }
 
+void ButtonExit_callback(const String &state) {
+  BLINKER_LOG("get ButtonExit state: ", state);
+  emergencyExit = 1;
+}
+
 void ButtonSafely_callback(const String &state) {
   BLINKER_LOG("get ButtonSafely state: ", state);
   if (state == "on") {
-    sleepstate = 1;
+    sleepstate = 2;
     ButtonSafely.print("on");
     ButtonShallow.print("off");
+    ButtonDeeply.print("off");
   }
 
   if (state == "off") {
-    sleepstate = 2;
+    sleepstate = 0;
     ButtonSafely.print("off");
-    ButtonShallow.print("on");
+    ButtonShallow.print("off");
+    ButtonDeeply.print("off");
   }
 }
 
 void ButtonShallow_callback(const String &state) {
   BLINKER_LOG("get ButtonShallow state: ", state);
   if (state == "on") {
-    sleepstate = 2;
+    sleepstate = 1;
     ButtonSafely.print("off");
     ButtonShallow.print("on");
+    ButtonDeeply.print("off");
   }
 
   if (state == "off") {
-    sleepstate = 1;
-    ButtonSafely.print("on");
+    sleepstate = 0;
+    ButtonSafely.print("off");
     ButtonShallow.print("off");
+    ButtonDeeply.print("off");
+  }
+}
+
+void ButtonDeeply_callback(const String &state) {
+  BLINKER_LOG("get ButtonDeeply state: ", state);
+  if (state == "on") {
+    sleepstate = 3;
+    ButtonSafely.print("off");
+    ButtonShallow.print("off");
+    ButtonDeeply.print("on");
+  }
+
+  if (state == "off") {
+    sleepstate = 0;
+    ButtonSafely.print("off");
+    ButtonShallow.print("off");
+    ButtonDeeply.print("off");
   }
 }
 
@@ -101,11 +131,29 @@ void SliderMint_callback(int32_t value) {
 //}
 
 
+void PokemonplusOn(){
+
+  digitalWrite(plus,HIGH);
+  Blinker.delay(1800);
+  digitalWrite(plus,LOW);
+}
+
+void Emergency_Exit(){
+
+  if(emergencyExit == 1){
+    Serial.println("Emergency Exit.");
+  }
+}
+
 void GotoSleep() {
 
   Serial.println("GotoSleep");
   while (1) {
     Blinker.run();
+    Emergency_Exit();
+    if(emergencyExit == 1){
+      break;
+    }
     if (mint == 10) {
       mint = 0;
       gosleepmsg = 0;
@@ -114,14 +162,16 @@ void GotoSleep() {
   }
 }
 void Shallow(int st) {
-  int s = st / 10 ;
-  int xx = 0;
-  int yy = 0;
+  int s = st / 5 ;
   Serial.println("Shallow");
   for (int i = 0; i < s; i++) {
     Serial.println("Star1");
     while (1) {
       Blinker.run();
+      Emergency_Exit();
+      if(emergencyExit == 1){
+      break;
+    }
       if (mint >= 5) {
         onoff = 1;
         Serial.println("Star3");
@@ -129,6 +179,10 @@ void Shallow(int st) {
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
+          Emergency_Exit();
+          if(emergencyExit == 1){
+            break;
+          }
           if (tens >= 1) {
             tens = 0;
             onoff = 0;
@@ -148,13 +202,15 @@ void Shallow(int st) {
 
 void Safely(int st) {
   int s = st / 10 ;
-  int xx = 0;
-  int yy = 0;
   Serial.println("Safely");
   for (int i = 0; i < s; i++) {
     Serial.println("Star1");
     while (1) {
       Blinker.run();
+      Emergency_Exit();
+      if(emergencyExit == 1){
+      break;
+    }
       if (mint >= 10) {
         onoff = 1;
         Serial.println("Star3");
@@ -162,6 +218,10 @@ void Safely(int st) {
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
+          Emergency_Exit();
+          if(emergencyExit == 1){
+            break;
+          }
           if (tens >= 1) {
             tens = 0;
             onoff = 0;
@@ -179,7 +239,26 @@ void Safely(int st) {
   }
 }
 
-void Deeply() {
+void Deeply(int st) {
+
+  int s = st / 10 ;
+  Serial.println("Deeply");
+  for (int i = 0; i < s; i++) {
+    Serial.println("Star1");
+    while (1) {
+      Blinker.run();
+      Emergency_Exit();
+      if(emergencyExit == 1){
+        break;
+      }
+      if (mint >= 10) {
+        Serial.println("Star3");
+        onoff = 0;
+        break;
+        }
+      }
+    }
+    Serial.println("Out");
 }
 
 void service_timer0() {
@@ -205,9 +284,11 @@ void service_timer0() {
 
 void clearCount() {
   havesleep=0;
+  emergencyExit = 0;
   count = 0;
   tens = 0;
   mint = 0;
+  onoff = 0;
 }
 
 void Init_wifi(){
@@ -236,8 +317,10 @@ void Init_Blinker(){
 
   Blinker.attachHeartbeat(heartbeat);
   ButtonSleep.attach(ButtonSleep_callback);
+  ButtonExit.attach(ButtonExit_callback);
   ButtonSafely.attach(ButtonSafely_callback);
   ButtonShallow.attach(ButtonShallow_callback);
+  ButtonDeeply.attach(ButtonDeeply_callback);
   SliderHour.attach(SliderHour_callback);
   SliderMint.attach(SliderMint_callback);
 }
@@ -258,14 +341,22 @@ void Update_BlinkerUI(){
     case 0 :
         ButtonSafely.print("off");
         ButtonShallow.print("off");
+        ButtonDeeply.print("off");
         break;
     case 1 :
-        ButtonSafely.print("on");
-        ButtonShallow.print("off");
-        break;
-    case 2 :
         ButtonSafely.print("off");
         ButtonShallow.print("on");
+        ButtonDeeply.print("off");
+        break;
+    case 2 :
+        ButtonSafely.print("on");
+        ButtonShallow.print("off");
+        ButtonDeeply.print("off");
+        break;
+    case 3 :
+        ButtonSafely.print("off");
+        ButtonShallow.print("off");
+        ButtonDeeply.print("on");
         break;
   }
 
@@ -299,7 +390,9 @@ void setup() {
   // BLINKER_DEBUG.stream(Serial);
   // BLINKER_DEBUG.debugAll();
   pinMode(shock, OUTPUT);
+  pinMode(plus,OUTPUT);
   digitalWrite(shock, LOW);
+  digitalWrite(plus, LOW);
   Init_timer();
   timerStop(tim);   //Stop之后ReStart不生效
   ledcAttach(shock, FREQ, RESOLUTION);
@@ -318,16 +411,23 @@ void loop() {
         Serial.println("erro time");
         buttononoff=0;
       } 
-      else {
-        timerStart(tim);
+      if(sleepstate == 0){
+        Serial.println("erro state");
+        buttononoff=0;
+      }
+
+      if(sleeptime > 0 && sleepstate != 0) {
         if (sleepstate == 1) {
           //sleeptime = 280;
+          timerStart(tim);
+          PokemonplusOn();
           clearCount();
           timerRestart(tim);
           gosleepmsg = 1;
           GotoSleep();
-          Safely(sleeptime);
+          Shallow(sleeptime);
           GotoSleep();
+          PokemonplusOn();
           timerStop(tim);
           Serial.println("Shock End.");
           clearCount();
@@ -338,12 +438,34 @@ void loop() {
         }
         if (sleepstate == 2) {
           //sleeptime = 280;
+          timerStart(tim);
+          PokemonplusOn();
           clearCount();
           timerRestart(tim);
           gosleepmsg = 1;
           GotoSleep();
-          Shallow(sleeptime);
+          Safely(sleeptime);
           GotoSleep();
+          PokemonplusOn();
+          timerStop(tim);
+          Serial.println("Shock End.");
+          clearCount();
+          ButtonIcon.icon("far fa-sun");
+          ButtonIcon.color("#F4A460");
+          ButtonIcon.text("等待睡觉");
+          ButtonIcon.print();
+        }
+        if (sleepstate == 3) {
+          //sleeptime = 280;
+          timerStart(tim);
+          PokemonplusOn();
+          clearCount();
+          timerRestart(tim);
+          gosleepmsg = 1;
+          GotoSleep();
+          Deeply(sleeptime);
+          GotoSleep();
+          PokemonplusOn();
           timerStop(tim);
           Serial.println("Shock End.");
           clearCount();
@@ -356,4 +478,5 @@ void loop() {
         buttononoff = 0;
       }
     }
+
 }
