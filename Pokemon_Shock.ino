@@ -14,8 +14,8 @@ char auth[] = "c3d2e3af440e";
 
 WiFiManager wifiManager;
 
-int shock = 15;
-int plus = 18;
+int shock = 4;
+int plus = 1;
 int onoff = 0;
 int emergencyExit = 0;
 int gosleepmsg = 0;
@@ -134,7 +134,7 @@ void SliderMint_callback(int32_t value) {
 void PokemonplusOn(){
 
   digitalWrite(plus,HIGH);
-  Blinker.delay(1800);
+  Blinker.delay(1600);
   digitalWrite(plus,LOW);
 }
 
@@ -162,7 +162,7 @@ void GotoSleep() {
   }
 }
 void Shallow(int st) {
-  int s = st / 5 ;
+  int s = st / 4 ;
   Serial.println("Shallow");
   for (int i = 0; i < s; i++) {
     Serial.println("Star1");
@@ -172,7 +172,7 @@ void Shallow(int st) {
       if(emergencyExit == 1){
       break;
     }
-      if (mint >= 5) {
+      if (mint >= 4) {
         onoff = 1;
         Serial.println("Star3");
         ledcWrite(shock, 45);
@@ -214,7 +214,7 @@ void Safely(int st) {
       if (mint >= 10) {
         onoff = 1;
         Serial.println("Star3");
-        ledcWrite(shock, 45);
+        ledcWrite(shock, 48);
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
@@ -254,6 +254,7 @@ void Deeply(int st) {
       if (mint >= 10) {
         Serial.println("Star3");
         onoff = 0;
+        mint = 0;
         break;
         }
       }
