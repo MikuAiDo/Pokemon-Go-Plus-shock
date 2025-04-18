@@ -21,6 +21,7 @@ int emergencyExit = 0;
 int gosleepmsg = 0;
 int sleeptime = 0;
 int havesleep = 0;
+int tolongdeep = 0;
 int buttononoff = 0;
 int sleepstate = 0;
 int hourcount = 0;
@@ -155,14 +156,14 @@ void GotoSleep() {
       break;
     }
     if (mint == 10) {
-      mint = 0;
+      //mint = 0;
       gosleepmsg = 0;
       break;
     }
   }
 }
 void Shallow(int st) {
-  int s = st / 4 ;
+  int s = st / 4 + 1;
   Serial.println("Shallow");
   for (int i = 0; i < s; i++) {
     Serial.println("Star1");
@@ -201,7 +202,7 @@ void Shallow(int st) {
 }
 
 void Safely(int st) {
-  int s = st / 10 ;
+  int s = st / 10 + 1;
   Serial.println("Safely");
   for (int i = 0; i < s; i++) {
     Serial.println("Star1");
@@ -214,7 +215,7 @@ void Safely(int st) {
       if (mint >= 10) {
         onoff = 1;
         Serial.println("Star3");
-        ledcWrite(shock, 48);
+        ledcWrite(shock, 45);
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
@@ -241,9 +242,12 @@ void Safely(int st) {
 
 void Deeply(int st) {
 
-  int s = st / 10 ;
+  int halfs = st / 2;
+  if(st >= 350){
+    tolongdeep = 1;
+  }
   Serial.println("Deeply");
-  for (int i = 0; i < s; i++) {
+  for (int i = 0; i < 2; i++) {
     Serial.println("Star1");
     while (1) {
       Blinker.run();
@@ -251,7 +255,27 @@ void Deeply(int st) {
       if(emergencyExit == 1){
         break;
       }
-      if (mint >= 10) {
+      if (mint >= halfs) {
+        if(st >= 350){
+           onoff = 1;
+           Serial.println("Star3");
+           ledcWrite(shock, 45);
+           Serial.println("StarShock");
+           while (1) {
+             Blinker.run();
+             Emergency_Exit();
+             if(emergencyExit == 1){
+               break;
+             }
+             if (tens >= 1) {
+              tens = 0;
+              onoff = 0;
+              mint = 0;
+              ledcWrite(shock, 0);
+              break;
+            }
+        }
+        }
         Serial.println("Star3");
         onoff = 0;
         mint = 0;
