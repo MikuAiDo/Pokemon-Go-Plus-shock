@@ -31,6 +31,7 @@ int slidermint = 0;
 volatile int count = 0;
 volatile int mint = 0;
 volatile int tens = 0;
+volatile int fives = 0;
 hw_timer_t *tim = NULL;
 // 新建组件对象
 BlinkerButton ButtonSleep("btn-abc");
@@ -155,13 +156,31 @@ void GotoSleep() {
     if(emergencyExit == 1){
       break;
     }
-    if (mint == 10) {
+    if (mint == 12) {
       //mint = 0;
       gosleepmsg = 0;
       break;
     }
   }
 }
+
+void GotoWeak() {
+
+  Serial.println("GotoWeak");
+  while (1) {
+    Blinker.run();
+    Emergency_Exit();
+    if(emergencyExit == 1){
+      break;
+    }
+    if (mint == 5) {
+      mint = 0;
+      gosleepmsg = 0;
+      break;
+    }
+  }
+}
+
 void Shallow(int st) {
   int s = st / 4 + 1;
   Serial.println("Shallow");
@@ -176,7 +195,7 @@ void Shallow(int st) {
       if (mint >= 4) {
         onoff = 1;
         Serial.println("Star3");
-        ledcWrite(shock, 45);
+        ledcWrite(shock, 55);
         Serial.println("StarShock");
         while (1) {
           Blinker.run();
@@ -223,8 +242,8 @@ void Safely(int st) {
           if(emergencyExit == 1){
             break;
           }
-          if (tens >= 1) {
-            tens = 0;
+          if (fives >= 1) {
+            fives = 0;
             onoff = 0;
             mint = 0;
             ledcWrite(shock, 0);
@@ -290,6 +309,13 @@ void service_timer0() {
   count++;
   // Serial.print(count);
   // Serial.println(" Secon");
+  if (count % 5 == 0) {
+    if (onoff == 1) {
+      fives++;
+      // Serial.print(tens);
+      // Serial.println(" TenSecon");
+    }
+  }
   if (count % 10 == 0) {
     if (onoff == 1) {
       tens++;
@@ -451,7 +477,7 @@ void loop() {
           gosleepmsg = 1;
           GotoSleep();
           Shallow(sleeptime);
-          GotoSleep();
+          GotoWeak();
           PokemonplusOn();
           timerStop(tim);
           Serial.println("Shock End.");
@@ -470,7 +496,7 @@ void loop() {
           gosleepmsg = 1;
           GotoSleep();
           Safely(sleeptime);
-          GotoSleep();
+          GotoWeak();
           PokemonplusOn();
           timerStop(tim);
           Serial.println("Shock End.");
@@ -489,7 +515,7 @@ void loop() {
           gosleepmsg = 1;
           GotoSleep();
           Deeply(sleeptime);
-          GotoSleep();
+          GotoWeak();
           PokemonplusOn();
           timerStop(tim);
           Serial.println("Shock End.");
